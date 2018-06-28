@@ -118,7 +118,7 @@ function factory (type, config, load, typed) {
           redoInic = true
           sBefore = s
         }
-
+        
         if (redoInic) { // Apply first rules again without succ div rules (if there are changes)
           expr = simplify(expr, setRules.firstRulesAgain)
         }
@@ -211,7 +211,13 @@ function factory (type, config, load, typed) {
         throw new ArgumentsError('There is an unsolved function call')
       } else if (tp === 'OperatorNode') {
         if (node.op === '^' && node.isBinary()) {
-          if (node.args[1].type !== 'ConstantNode' || !number.isInteger(parseFloat(node.args[1].value))) {
+          if (node.args[1].op === '-'){
+            if(node.args[1].args[0].type !== 'ConstantNode' || !number.isInteger(parseFloat(node.args[1].args[0].value))){
+              throw new ArgumentsError('There is a non-integer exponent')
+            }else{
+              recPoly(node.args[0])
+            }
+          }else if (node.args[1].type !== 'ConstantNode' || !number.isInteger(parseFloat(node.args[1].value))) {
             throw new ArgumentsError('There is a non-integer exponent')
           } else {
             recPoly(node.args[0])
@@ -257,6 +263,7 @@ function factory (type, config, load, typed) {
       {l: 'n*(n1^-1)', r: 'n/n1'},
       {l: 'n*n1^-n2', r: 'n/n1^n2'},
       {l: 'n1^-1', r: '1/n1'},
+      {l: 'n1^-n2', r:'1/n1^n2' },      
       {l: 'n*(n1/n2)', r: '(n*n1)/n2'},
       {l: '1*n', r: 'n'}]
 
