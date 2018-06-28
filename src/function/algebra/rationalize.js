@@ -101,24 +101,18 @@ function factory (type, config, load, typed) {
         let redoInic = true // If has change after start, redo the beginning
         let s = '' // New expression
         let sBefore // Previous expression
-        let rules
-        let eDistrDiv = true
-
-        expr = simplify(expr, setRules.firstRules) // Apply the initial rules, including succ div rules
-        s = expr.toString()
 
         while (true) { // Apply alternately  successive division rules and distr.div.rules
-          rules = eDistrDiv ? setRules.distrDivRules : setRules.sucDivRules
-          expr = simplify(expr, rules) // until no more changes
-          eDistrDiv = !eDistrDiv // Swap between Distr.Div and Succ. Div. Rules
-
+          expr = simplify(expr, setRules.firstRules) // Apply the initial rules, including succ div rules
+          expr = simplify(expr, setRules.distrDivRules) // and distr.div.rules until no more changes        
           s = expr.toString()
-          if (s === sBefore) break // No changes : end of the loop
-
+          if (s === sBefore){
+              break // No changes : end of the loop
+          }
           redoInic = true
           sBefore = s
         }
-        
+
         if (redoInic) { // Apply first rules again without succ div rules (if there are changes)
           expr = simplify(expr, setRules.firstRulesAgain)
         }
