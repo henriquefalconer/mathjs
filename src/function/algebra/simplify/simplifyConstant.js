@@ -70,7 +70,7 @@ function factory (type, config, load, typed, math) {
       } else if (config.number === 'Fraction') {
         return math.fraction(s)
       } else {
-        return _exactFraction(parseFloat(s))
+        return parseFloat(s)
       }
     },
 
@@ -79,14 +79,14 @@ function factory (type, config, load, typed, math) {
     'BigNumber': function (s) { return s },
 
     'number': function (s) {
-      return _exactFraction(s)
+      return s
     },
 
     'Complex': function (s) {
       if (s.im !== 0) {
         return s
       }
-      return _exactFraction(s.re)
+      return s.re
     }
   })
 
