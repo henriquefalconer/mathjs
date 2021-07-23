@@ -169,15 +169,12 @@ export const createRationalize = /* #__PURE__ */ factory(name, dependencies, ({
         expr = simplify(expr, setRules.firstRules, {}, { exactFractions: false }) // Apply the initial rules, including succ div rules
         let s
         while (true) { // Apply alternately  successive division rules and distr.div.rules
-          rules = eDistrDiv ? setRules.distrDivRules : setRules.sucDivRules
-          expr = simplify(expr, rules) // until no more changes
-          eDistrDiv = !eDistrDiv // Swap between Distr.Div and Succ. Div. Rules
-
+          expr = simplify(expr, setRules.firstRules) // Apply the initial rules, including succ div rules
+          expr = simplify(expr, setRules.distrDivRules) // and distr.div.rules until no more changes        
           s = expr.toString()
-          if (s === sBefore) {
-            break // No changes : end of the loop
+          if (s === sBefore){
+              break // No changes : end of the loop
           }
-
           redoInic = true
           sBefore = s
         }
@@ -274,10 +271,15 @@ export const createRationalize = /* #__PURE__ */ factory(name, dependencies, ({
         // No function call in polynomial expression
         throw new Error('There is an unsolved function call')
       } else if (tp === 'OperatorNode') {
-        if (node.op === '^') {
-          // TODO: handle negative exponents like in '1/x^(-2)'
-          if (node.args[1].type !== 'ConstantNode' || !isInteger(parseFloat(node.args[1].value))) {
-            throw new Error('There is a non-integer exponent')
+        if (node.op === '^' && node.isBinary()) {
+          if (node.args[1].op === '-'){
+            if(node.args[1].args[0].type !== 'ConstantNode' || !number.isInteger(parseFloat(node.args[1].args[0].value))){
+              throw new ArgumentsError('There is a non-integer exponent')
+            }else{
+              recPoly(node.args[0])
+            }
+          }else if (node.args[1].type !== 'ConstantNode' || !number.isInteger(parseFloat(node.args[1].value))) {
+            throw new ArgumentsError('There is a non-integer exponent')
           } else {
             recPoly(node.args[0])
           }
@@ -319,11 +321,12 @@ export const createRationalize = /* #__PURE__ */ factory(name, dependencies, ({
       { l: 'n+n', r: '2*n' },
       { l: 'n+-n', r: '0' },
       simplifyConstant, // sConstant
-      { l: 'n*(n1^-1)', r: 'n/n1' },
-      { l: 'n*n1^-n2', r: 'n/n1^n2' },
-      { l: 'n1^-1', r: '1/n1' },
-      { l: 'n*(n1/n2)', r: '(n*n1)/n2' },
-      { l: '1*n', r: 'n' }]
+      {l: 'n*(n1^-1)', r: 'n/n1'},
+      {l: 'n*n1^-n2', r: 'n/n1^n2'},
+      {l: 'n1^-1', r: '1/n1'},
+      {l: 'n1^-n2', r:'1/n1^n2' },      
+      {l: 'n*(n1/n2)', r: '(n*n1)/n2'},
+      {l: '1*n', r: 'n'}]
 
     const rulesFirst = [
       { l: '(-n1)/(-n2)', r: 'n1/n2' }, // Unary division
